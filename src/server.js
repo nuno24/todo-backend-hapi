@@ -17,7 +17,11 @@ const init = async () => {
       validate: {
         params: Joi.object({
           username: Joi.string().min(2)
-        })}
+        })
+      },
+      response: {
+        schema: Joi.string()
+      },
     },
     handler: (req, h) => { 
       if(req.params.username){
@@ -31,8 +35,15 @@ const init = async () => {
   server.route({
     method: 'GET',
     path: '/health',
+    options:{
+      response: {
+        schema: Joi.object({
+          status: Joi.string()
+        })
+      }
+    },
     handler: (req, h) => { 
-      return {status: 'ok'}
+      return {status:"ok"}
     }
   })
 
