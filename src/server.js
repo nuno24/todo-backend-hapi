@@ -5,6 +5,7 @@ const Joi = require('joi')
 const Inert = require('@hapi/inert')
 const Vision = require('@hapi/vision')
 const HapiSwagger = require('hapi-swagger')
+const DbPlugin = require('./plugins/db')
 
 const init = async () => {
 
@@ -25,7 +26,8 @@ const init = async () => {
         },
       documentationPath: '/docs'
       }
-    }
+    },
+    DbPlugin
   ])
 
   server.route({
@@ -51,7 +53,7 @@ const init = async () => {
     }
   })
 
-  server.route({
+  server.route(  {
     method: 'GET',
     path: '/health',
     options:{
@@ -65,7 +67,21 @@ const init = async () => {
     handler: (req, h) => { 
       return {status:"ok"}
     }
+  }
+  )
+
+  server.route(  {
+    method: 'GET',
+    path: '/db',
+    options: {
+      tags: ['api']
+    },
+    handler: async (req, h) => {
+      const res = await req.server.app.db.raw('select 1')
+      return {ok: true}
+    }
   })
+  
 
   await server.start()
   console.log('Server running on %s', server.info.uri)
