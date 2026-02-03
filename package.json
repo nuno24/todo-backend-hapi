@@ -16,6 +16,9 @@
   },
   "dependencies": {
     "@hapi/hapi": "^21.4.4",
-    "joi": "^18.0.2"
+    "@hapi/inert": "^7.1.0",
+    "@hapi/vision": "^7.0.3",
+    "hapi-swagger": "^17.3.2",
+    "joi": "^17.13.3"
   }
 }

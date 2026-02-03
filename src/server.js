@@ -2,6 +2,9 @@
 
 const Hapi = require('@hapi/hapi')
 const Joi = require('joi')
+const Inert = require('@hapi/inert')
+const Vision = require('@hapi/vision')
+const HapiSwagger = require('hapi-swagger')
 
 const init = async () => {
 
@@ -10,10 +13,26 @@ const init = async () => {
     host: 'localhost'
   })
 
+  await server.register([
+    Inert,
+    Vision,
+    {
+      plugin: HapiSwagger,
+      options: {
+        info: {
+          title: 'API DOCS',
+          version: '1.0.0',
+        },
+      documentationPath: '/docs'
+      }
+    }
+  ])
+
   server.route({
     method: 'GET',
     path: '/user/{username*}',
     options: {
+      tags: ['api'],
       validate: {
         params: Joi.object({
           username: Joi.string().min(2)
@@ -36,6 +55,7 @@ const init = async () => {
     method: 'GET',
     path: '/health',
     options:{
+      tags: ['api'],
       response: {
         schema: Joi.object({
           status: Joi.string()
