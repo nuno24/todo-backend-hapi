@@ -12,9 +12,19 @@ const init = async () => {
 
   server.route({
     method: 'GET',
-    path: '/user/{username}',
+    path: '/user/{username*}',
+    options: {
+      validate: {
+        params: Joi.object({
+          username: Joi.string().min(2)
+        })}
+    },
     handler: (req, h) => { 
-      return `Hello ${req.params.username}`
+      if(req.params.username){
+        return `Hello ${req.params.username}`
+      } else {
+        return `Hello Random user`
+      }
     }
   })
 
