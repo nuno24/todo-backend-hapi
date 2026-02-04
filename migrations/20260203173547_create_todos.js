@@ -5,7 +5,7 @@
 exports.up = function(knex) {
   return knex.schema.createTable('todos', (table) => {
     table.uuid("id").primary();
-    table.boolean("state").notNullable().defaultTo(false);
+    table.enu('state', ['COMPLETE', 'INCOMPLETE']).notNullable().defaultTo("INCOMPLETE");
     table.string("description").notNullable();
     table.dateTime("createdAt").notNullable().defaultTo(knex.fn.now());
     table.dateTime("completedAt").nullable();
