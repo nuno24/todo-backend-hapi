@@ -14,7 +14,14 @@ const init = async () => {
 
   const server = Hapi.server({
     port: 3000,
-    host: 'localhost'
+    host: 'localhost',
+    routes: {
+      cors: {
+        origin: ['http://localhost:3001'],
+        additionalHeaders: ['Content-Type', 'Authorization'],
+        credentials: false
+      }
+    }
   })
 
   await server.register([
@@ -35,50 +42,16 @@ const init = async () => {
 
   server.route({
     method: 'GET',
-    path: '/user/{username*}',
-    options: {
-      tags: ['api'],
-      validate: {
-        params: Joi.object({
-          username: Joi.string().min(2)
-        })
-      },
-      response: {
-        schema: Joi.string()
-      },
-    },
-    handler: (req, h) => { 
-      if(req.params.username){
-        return `Hello ${req.params.username}`
-      } else {
-        return `Hello Random user`
-      }
-    }
-  })
-
-  server.route(  {
-    method: 'GET',
-    path: '/health',
-    options:{
-      tags: ['api'],
-      response: {
-        schema: Joi.object({
-          status: Joi.string()
-        })
-      }
-    },
-    handler: (req, h) => { 
-      return {status:"ok"}
-    }
-  }
-  )
-
-  server.route({
-    method: 'GET',
     path: '/todos',
     options: {
       description: 'GET ALL TODOS',
       tags: ['api'],
+      validate: {
+        query: Joi.object({
+          filter: Joi.string().valid('ALL', 'COMPLETE', 'INCOMPLETE').insensitive().default('ALL'),
+          orderBy: Joi.string().valid('DESCRIPTION', 'CREATED_AT', 'COMPLETED_AT').insensitive().default('CREATED_AT')
+        })
+      },
       response: {
         schema: Joi.array().items(Joi.object({
           id: Joi.string().uuid().required(),
@@ -90,9 +63,17 @@ const init = async () => {
       },
     },
     handler: async (req, h) => {
+      const { filter, orderBy } = req.query
       const knex = req.server.app.db
 
-      const rows = await knex('todos').select('*')
+      let query = knex('todos').select('*')
+      if(filter !== 'ALL'){
+        query = query.where({state: filter})
+      }
+
+      const order = orderBy === 'DESCRIPTION' ? 'description' : (orderBy === 'COMPLETED_AT' ? 'completedAt' : 'createdAt')
+      
+      const rows = await query.orderBy(order, 'asc')
       const todos = rows.map(row => ({
           id: row.id,
           state: row.state,
@@ -109,7 +90,7 @@ const init = async () => {
 
   server.route({
     method: 'POST',
-    path:'/todo',
+    path:'/todos',
     options: {
       description: 'CREATE POST',
       tags: ['api'],
@@ -212,6 +193,32 @@ const init = async () => {
           completedAt: updated.completedAt ?? null
         }
       return h.response(response).code(200)
+    }
+  })
+  
+  server.route({
+    method: 'DELETE',
+    path: '/todo/{id}',
+    options: {
+      description: 'DELETE TODO',
+      tags: ['api'],
+      validate: {
+        params: Joi.object({
+          id: Joi.string().uuid().required()
+        })
+      },
+    },
+    handler: async (req, h) => {
+      const { id } = req.params
+      const knex = req.server.app.db
+
+      const rows = await knex('todos').where({id}).del().returning('*')
+      
+      if(rows.length === 0){
+        return h.response({message: `No TODO was found for ID:${id}`}).code(404)
+      }
+
+      return h.response(rows).code(200)
     }
   })
   
