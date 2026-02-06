@@ -73,7 +73,7 @@ const init = async () => {
 
       const order = orderBy === 'DESCRIPTION' ? 'description' : (orderBy === 'COMPLETED_AT' ? 'completedAt' : 'createdAt')
       
-      const rows = await query.orderBy(order, 'asc')
+      const rows = await query.orderBy(order, 'desc')
       const todos = rows.map(row => ({
           id: row.id,
           state: row.state,
